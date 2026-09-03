@@ -11,6 +11,9 @@
 # conservando la misma estructura de carpetas que tenían
 # originalmente.
 #
+#Finalmente, crea un enlace en la subcarpeta de origen, apuntando 
+#al destino donde fue movido el archivo multimedia
+#
 # IMPORTANTE:
 # - El programa MUEVE los archivos, no los copia.
 # - Los archivos originales desaparecen de la carpeta de origen
@@ -32,6 +35,9 @@ import os
 # sobre archivos y carpetas, como copiar o mover archivos.
 import shutil
 
+# "subprocess" permite ejecutar comandos del sistema (PowerShell)
+import subprocess
+
 
 # ------------------------------------------------------------
 # CONFIGURACIÓN DE RUTAS Y EXTENSIONES
@@ -50,7 +56,7 @@ import shutil
 # La letra "r" antes de las comillas significa "raw string".
 # Se utiliza para que Python interprete correctamente las
 # barras invertidas "\" utilizadas en las rutas de Windows.
-origen = r"C:\Users\chira\Documents\Contratos y Convenios\LS\LS 2026\Pruebita"
+origen = r"C:\Users\chira\Documents\Contratos y Convenios\LS\LS 2026"
 
 
 # ------------------------------------------------------------
@@ -74,6 +80,8 @@ destino = r"D:\Productos\LS 2026"
 # .jpg  -> imagen JPEG
 # .jpeg -> imagen JPEG
 # .png  -> imagen PNG
+# .arw	extension de sony
+# .dng estandar abierto y universal de raw
 # .mp4  -> vídeo MP4
 # .mov  -> vídeo MOV
 # .avi  -> vídeo AVI
@@ -83,27 +91,33 @@ destino = r"D:\Productos\LS 2026"
 #
 # Los archivos con otras extensiones, por ejemplo .pdf,
 # .docx o .xlsx, serán ignorados.
-extensiones = (".jpg", ".jpeg", ".png", ".mp4", ".mov", ".avi", ".mkv", ".mp3", ".wav")
+extensiones = (".jpg", ".jpeg", ".png", ".arw", ".dng", ".mp4", ".mov", ".avi", ".mkv", ".mp3", ".wav")
 
 
 # ------------------------------------------------------------
-# FUNCIÓN AUXILIAR: CREAR ACCESO DIRECTO / HIPERVÍNCULO
+# FUNCIÓN AUXILIAR: CREAR ACCESO DIRECTO (.LNK)
 # ------------------------------------------------------------
 
 def crear_acceso_directo(ruta_origen_carpeta, ruta_destino_carpeta):
     """
-    Crea un archivo de acceso directo (.url) en la carpeta de origen 
+    Crea un acceso directo nativo de Windows (.lnk) en la carpeta de origen 
     que apunta a la carpeta de destino donde se movieron los archivos.
+    Utiliza PowerShell para evitar requerir permisos de Administrador.
     """
-    nombre_acceso = "Acceso a Multimedia Movidos.url"
+    nombre_acceso = "Acceso a Multimedia Movidos.lnk"
     ruta_enlace = os.path.join(ruta_origen_carpeta, nombre_acceso)
     
     # Solo crea el acceso directo si aún no existe en esa subcarpeta
     if not os.path.exists(ruta_enlace):
         try:
-            with open(ruta_enlace, 'w', encoding='utf-8') as f:
-                f.write("[InternetShortcut]\n")
-                f.write(f"URL=file:///{ruta_destino_carpeta.replace(os.sep, '/')}\n")
+            # Comando de PowerShell para crear un acceso directo .lnk
+            ps_script = (
+                f"$WshShell = New-Object -ComObject WScript.Shell; "
+                f"$Shortcut = $WshShell.CreateShortcut('{ruta_enlace}'); "
+                f"$Shortcut.TargetPath = '{ruta_destino_carpeta}'; "
+                f"$Shortcut.Save()"
+            )
+            subprocess.run(["powershell", "-Command", ps_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print(f"   [ENLACE CREADO] -> {nombre_acceso}")
         except Exception as e:
             print(f"   [ERROR AL CREAR ENLACE] -> {e}")
