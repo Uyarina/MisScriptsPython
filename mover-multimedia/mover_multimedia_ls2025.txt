@@ -1,0 +1,281 @@
+# ============================================================
+# MOVIMIENTO DE ARCHIVOS MULTIMEDIA
+# ============================================================
+#
+# ¿QUÉ HACE ESTE SCRIPT?
+#
+# Este programa recorre una carpeta y todas sus subcarpetas
+# para localizar determinados archivos multimedia.
+#
+# Los archivos encontrados son MOVIDOS a otra ubicación,
+# conservando la misma estructura de carpetas que tenían
+# originalmente.
+#
+# IMPORTANTE:
+# - El programa MUEVE los archivos, no los copia.
+# - Los archivos originales desaparecen de la carpeta de origen
+#   después de realizarse correctamente el movimiento.
+# - Solo se procesan las extensiones indicadas en la variable
+#   "extensiones".
+# ============================================================
+
+
+# ------------------------------------------------------------
+# IMPORTAR MÓDULOS
+# ------------------------------------------------------------
+
+# "os" es un módulo de Python que permite trabajar con el
+# sistema operativo: rutas, carpetas, archivos, etc.
+import os
+
+# "shutil" contiene funciones para realizar operaciones
+# sobre archivos y carpetas, como copiar o mover archivos.
+import shutil
+
+
+# ------------------------------------------------------------
+# DEFINIR LA CARPETA DE ORIGEN
+# ------------------------------------------------------------
+
+# Esta variable contiene la carpeta principal donde Python
+# comenzará a buscar los archivos.
+#
+# El programa también recorrerá todas las subcarpetas que
+# existan dentro de esta ubicación.
+#
+# La letra "r" antes de las comillas significa "raw string".
+# Se utiliza para que Python interprete correctamente las
+# barras invertidas "\" utilizadas en las rutas de Windows.
+origen = r"C:\Users\chira\Documents\Contratos y Convenios\LS\2026\Pruebita"
+
+
+# ------------------------------------------------------------
+# DEFINIR LA CARPETA DE DESTINO
+# ------------------------------------------------------------
+
+# Esta variable indica la ubicación donde se colocarán
+# los archivos encontrados.
+destino = r"D:\Productos\LS 2026"
+
+
+# ------------------------------------------------------------
+# DEFINIR LAS EXTENSIONES QUE SE BUSCARÁN
+# ------------------------------------------------------------
+
+# Aquí se indican los tipos de archivos que el programa
+# debe localizar y mover.
+#
+# En este caso se procesarán archivos de imagen y vídeo:
+#
+# .jpg  -> imagen JPEG
+# .jpeg -> imagen JPEG
+# .png  -> imagen PNG
+# .mp4  -> vídeo MP4
+# .mov  -> vídeo MOV
+# .avi  -> vídeo AVI
+# .mkv  -> vídeo MKV
+# .mp3  -> audio mp3
+# .wav  -> audio wav
+#
+# Los archivos con otras extensiones, por ejemplo .pdf,
+# .docx o .xlsx, serán ignorados.
+extensiones = (".jpg", ".jpeg", ".png", ".mp4", ".mov", ".avi", ".mkv", ".mp3", ".wav")
+
+
+# ------------------------------------------------------------
+# RECORRER LA CARPETA DE ORIGEN
+# ------------------------------------------------------------
+
+# os.walk() permite recorrer una carpeta de manera recursiva.
+#
+# Esto significa que no solamente revisará la carpeta "origen",
+# sino también todas las carpetas y subcarpetas que encuentre
+# dentro de ella.
+#
+# En cada recorrido, os.walk() proporciona tres elementos:
+#
+#   carpeta      -> ruta de la carpeta que se está revisando.
+#   subcarpetas  -> lista de subcarpetas encontradas.
+#   archivos     -> lista de archivos encontrados.
+#
+for carpeta, subcarpetas, archivos in os.walk(origen):
+
+
+    # --------------------------------------------------------
+    # RECORRER LOS ARCHIVOS DE LA CARPETA ACTUAL
+    # --------------------------------------------------------
+
+    # Recorremos uno por uno todos los archivos encontrados
+    # dentro de la carpeta actual.
+    for archivo in archivos:
+
+
+        # ----------------------------------------------------
+        # COMPROBAR LA EXTENSIÓN DEL ARCHIVO
+        # ----------------------------------------------------
+
+        # lower() convierte el nombre del archivo a minúsculas.
+        #
+        # Esto permite que el programa reconozca, por ejemplo:
+        #
+        # foto.jpg
+        # foto.JPG
+        # foto.Jpg
+        #
+        # como archivos con la misma extensión.
+        #
+        # endswith(extensiones) comprueba si el nombre del
+        # archivo termina con alguna de las extensiones
+        # indicadas anteriormente.
+        if archivo.lower().endswith(extensiones):
+
+
+            # ------------------------------------------------
+            # CONSTRUIR LA RUTA COMPLETA DEL ARCHIVO DE ORIGEN
+            # ------------------------------------------------
+
+            # os.path.join() une la ruta de la carpeta actual
+            # con el nombre del archivo.
+            #
+            # Por ejemplo:
+            #
+            # carpeta:
+            # C:\...\LS 2025\001.2025
+            #
+            # archivo:
+            # foto.jpg
+            #
+            # Resultado:
+            #
+            # C:\...\LS 2025\001.2025\foto.jpg
+            origen_archivo = os.path.join(carpeta, archivo)
+
+
+            # ------------------------------------------------
+            # OBTENER LA RUTA RELATIVA
+            # ------------------------------------------------
+
+            # os.path.relpath() calcula la ubicación de la
+            # carpeta actual tomando como referencia la
+            # carpeta principal de origen.
+            #
+            # Por ejemplo:
+            #
+            # origen:
+            # C:\...\LS 2025
+            #
+            # carpeta:
+            # C:\...\LS 2025\001.2025\Fotos
+            #
+            # ruta_relativa será:
+            #
+            # 001.2025\Fotos
+            #
+            # Esto permite conservar la estructura original
+            # de carpetas en la ubicación de destino.
+            ruta_relativa = os.path.relpath(carpeta, origen)
+
+
+            # ------------------------------------------------
+            # CONSTRUIR LA CARPETA DE DESTINO
+            # ------------------------------------------------
+
+            # Une la carpeta principal de destino con la ruta
+            # relativa obtenida anteriormente.
+            #
+            # Por ejemplo:
+            #
+            # destino:
+            # E:\Productos\LS 2025
+            #
+            # ruta_relativa:
+            # 001.2025\Fotos
+            #
+            # Resultado:
+            #
+            # E:\Productos\LS 2025\001.2025\Fotos
+            destino_carpeta = os.path.join(destino, ruta_relativa)
+
+
+            # ------------------------------------------------
+            # CONSTRUIR LA RUTA FINAL DEL ARCHIVO
+            # ------------------------------------------------
+
+            # Une la carpeta de destino con el nombre del archivo.
+            #
+            # Resultado de ejemplo:
+            #
+            # E:\Productos\LS 2025\001.2025\Fotos\foto.jpg
+            destino_archivo = os.path.join(destino_carpeta, archivo)
+
+
+            # ------------------------------------------------
+            # CREAR LA CARPETA DE DESTINO SI NO EXISTE
+            # ------------------------------------------------
+
+            # os.makedirs() crea la carpeta indicada.
+            #
+            # exist_ok=True significa:
+            #
+            # "Si la carpeta ya existe, no produzcas un error".
+            #
+            # Esto permite que el programa continúe funcionando
+            # aunque la carpeta de destino ya haya sido creada
+            # anteriormente.
+            os.makedirs(destino_carpeta, exist_ok=True)
+
+
+            # ------------------------------------------------
+            # VERIFICAR QUE EL ARCHIVO TODAVÍA EXISTA
+            # ------------------------------------------------
+
+            # Antes de intentar mover el archivo, comprobamos
+            # que todavía exista en la ubicación original.
+            #
+            # os.path.exists() devuelve:
+            #
+            # True  -> el archivo existe.
+            # False -> el archivo no existe.
+            #
+            # Esta comprobación evita intentar mover un archivo
+            # que haya sido eliminado o trasladado previamente.
+            if os.path.exists(origen_archivo):
+
+
+                # --------------------------------------------
+                # MOVER EL ARCHIVO
+                # --------------------------------------------
+
+                # shutil.move() mueve físicamente el archivo
+                # desde la ubicación original hasta la ubicación
+                # de destino.
+                #
+                # IMPORTANTE:
+                # Esto NO crea una copia. El archivo deja de estar
+                # en la ubicación original cuando el movimiento
+                # se realiza correctamente.
+                shutil.move(origen_archivo, destino_archivo)
+
+
+                # --------------------------------------------
+                # INFORMAR DEL MOVIMIENTO
+                # --------------------------------------------
+
+                # print() muestra un mensaje en la pantalla
+                # indicando qué archivo fue movido.
+                print("Movido:", origen_archivo)
+
+
+            else:
+
+                # --------------------------------------------
+                # INFORMAR QUE EL ARCHIVO NO FUE ENCONTRADO
+                # --------------------------------------------
+
+                # Si os.path.exists() devuelve False, significa
+                # que el archivo ya no está disponible en la
+                # ubicación original.
+                #
+                # En ese caso no se intenta realizar el movimiento
+                # y simplemente se informa en pantalla.
+                print("No encontrado:", origen_archivo)
