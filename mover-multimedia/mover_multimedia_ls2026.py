@@ -167,7 +167,17 @@ for carpeta, subcarpetas, archivos in os.walk(origen):
 
             if os.path.exists(origen_archivo):
                 try:
-                    # Mover archivo (funciona entre diferentes unidades C: -> D:)
+                    # --------------------------------------------
+                    # MOVER EL ARCHIVO
+                    # --------------------------------------------
+                    # shutil.move() mueve físicamente el archivo
+                    # desde la ubicación original hasta la ubicación
+                    # de destino.
+                    #
+                    # IMPORTANTE:
+                    # Esto NO crea una copia. El archivo deja de estar
+                    # en la ubicación original cuando el movimiento
+                    # se realiza correctamente.
                     shutil.move(origen_archivo, destino_archivo)
                     print(f"[MOVIDO] {archivo} -> {destino_carpeta}")
                     archivos_procesados += 1
